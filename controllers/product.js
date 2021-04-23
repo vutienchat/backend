@@ -20,7 +20,7 @@ export const create = (req, res) => {
         let product = new Product(fields);
         if(files.photo){
             // console.log(files.photo.size)
-           if(files.photo.size >100000){
+           if(files.photo.size >500000){
                return res.status(400).json({
                    error : "bạn chỉ có thể up ảnh dưới 1 mb"
                })
@@ -40,7 +40,15 @@ export const create = (req, res) => {
      })
 }
 export const listProduct = (req, res) => {
-    Product.find().select("-photo").populate('category').exec((err, data) => {
+    let price_gte = req.query.price_gte ? req.query.price_gte : 0;
+    let price_lte = req.query.price_lte ? req.query.price_lte : 9999999999999;
+    let _sort = req.query._sort;
+    let _order = req.query._order;
+    Product.find({$and: [{new_price: {$gte:price_gte} },{new_price: {$lte:price_lte}}]})
+    .select("-photo")
+    .sort([[_sort,_order]])
+    .populate('category')
+    .exec((err, data) => {
         // Product.find().exec((err, data) => {
         if(err){
             res.status(400).json({
@@ -97,7 +105,7 @@ export const update = (req, res) => {
     let product = req.product;
         product = _.assignIn(product,fields);
        if(files.photo){
-          if(files.photo.size >100000){
+          if(files.photo.size >500000){
               return res.status(400).json({
                   error : "bạn chỉ có thể up ảnh dưới 1 mb"
               })
@@ -132,12 +140,34 @@ export const listCategories = (req, res) => {
         res.json(data);
     })
 }
+export const listBySearch = () => {
+    let order = req.query.order ? req.query.order : 'asc';
+    let sortBy = req.query.sortBy ? req.query.sortBy : '_id';
+    let limit = req.query.limit ? +req.query.limit : 6;
+    let skip = parseInt(req.body.skip);
+    let findArgs = {}
+
+
+    for (let key in req.body.filters) {
+        if (req.body.filters[key].length > 0) {
+            if (key === "price") {
+                // gte - greater than price [0 - 10]
+                // lte - nhỏ hơn 
+                findArgs[key] = {
+                    $gte: req.body.filters[key][0],
+                    $lte: req.body.filters[key][1],
+                }
+            } else {
+                findArgs[key] = req.body.filters[key];
+             }
+            }
+        }
+    }
 export const listRelated = (req, res) => {
     let limit = req.query.limit ? req.query.limit : 5;
     Product.find({
         _id: { $ne: req.product },
         category: req.product.category
-        
     }) // $ne: not include
         .limit(limit)
         .select('-photo')
@@ -150,4 +180,14 @@ export const listRelated = (req, res) => {
             }
             res.json(products)
         })
+}
+export const Classify = (req, res) =>{
+    Product.find({classify : req.query.classify}).select("-photo").exec((err,data) =>{
+        if(err){
+            return res.status(400).json( {
+                error: "không có classify 1"
+            })
+        }
+        res.json(data)
+    })
 }

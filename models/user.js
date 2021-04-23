@@ -27,7 +27,7 @@ const userSchema = mongoose.Schema({
         type: String
     },
     role: {
-        type: String,
+        type: Number,
         default: 0
     },
     history: {
@@ -37,8 +37,8 @@ const userSchema = mongoose.Schema({
 },{timestamps: true});
 userSchema.virtual('password')
 .set(function (password)  {
+    // this._password = password;
     this.salt = uuuidv1()
-    // console.log(this.salt);
     this.hashed_password = this.encrytPassword(password)
 }) 
 .get(function () {

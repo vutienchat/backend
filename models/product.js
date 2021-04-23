@@ -36,10 +36,13 @@ const productSchema = mongoose.Schema({
         type: Number,
         default: 0
     },
+    classify: {
+        type:Number
+    },
     category: {
         type: ObjectId,
         ref: 'Category',
         required: true
     }
-},{timeStamps: true});
+},{timestamps: true});
 module.exports = mongoose.model('Product', productSchema);

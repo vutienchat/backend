@@ -1,8 +1,7 @@
 import dotenv from 'dotenv'
 import User from '../models/user'
-import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken'
-import expressJwt  from 'express-jwt'
+const expressJwt = require('express-jwt');
 dotenv.config();
 export const signup = (req, res) => {
     const user = new User(req.body)
@@ -36,7 +35,7 @@ exports.signin = (req, res) => {
         // generate a signed token with user id and secret
         const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
         // persist the token as 't' in cookie with  
-        res.cookie('t', token, { expire: new Date() + 9999 });
+        res.cookie('t', token, { expire: new Date() + 9999 ,httpOnly: true,visited: true});
         // return response with user and token to frontend client
         const { _id, name, email, role } = user;
         return res.json(
@@ -58,6 +57,11 @@ exports.requireSignin = expressJwt({
     userProperty: "auth",
 });
 exports.isAuth = (req, res, next) => {
+    // if(!req.auth){
+    //     return res.status(403).json({
+    //         error: "Access Deniedkkk"
+    //     })
+    // }
     let user = req.profile && req.auth && req.profile._id == req.auth._id;
     if (!user) {
         return res.status(403).json({
@@ -67,7 +71,7 @@ exports.isAuth = (req, res, next) => {
     next();
 }
 exports.isAdmin = (req, res, next) => {
-    if (req.profile.role == 0) {
+    if (req.profile.role == 1) {
         return res.status(403).json({
             error: "Admin resource! Access Denined"
         })

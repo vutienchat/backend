@@ -1,5 +1,4 @@
 import Category from '../models/category'
-import formidable from 'formidable';
 export const create = (req, res) => {
    const category = new Category(req.body);
    category.save((err,data) => {
@@ -12,6 +11,7 @@ export const create = (req, res) => {
    });
 }
 export const List = (req, res) => {
+    console.log(req.cookies);
     Category.find((err,data) => {
        if(err){
         return res.status(400).json({
