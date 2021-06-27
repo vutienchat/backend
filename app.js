@@ -21,23 +21,24 @@ app.use(cors({ credentials: 'same-origin' }))
 app.use(expressValidator());
 app.use(cookieParser());
 //connection 
-mongoose.connect(process.env.MONGODB_URI,{
-    useNewUrlParser: true,
-    useCreateIndex: true
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useCreateIndex: true,
+  useUnifiedTopology: true
 }).then(() => {
   console.log('database connected')
 });
-mongoose.connection.on('Error',err => {
-    console.log(`data connect failed , ${err.message}`)
+mongoose.connection.on('Error', err => {
+  console.log(`data connect failed , ${err.message}`)
 })
 
-app.use('/api',productRoutes);
-app.use('/api',categoryRoutes);
+app.use('/api', productRoutes);
+app.use('/api', categoryRoutes);
 app.use('/api', authRoutes);
-app.use('/api',userRoutes)
-app.use('/api',contactRoutes)
-app.use('/api',orderRoutes)
-app.use('/api',orderDetailRoutes)
+app.use('/api', userRoutes)
+app.use('/api', contactRoutes)
+app.use('/api', orderRoutes)
+app.use('/api', orderDetailRoutes)
 app.use(function (err, req, res, next) {
   if (err.name === 'UnauthorizedError') {
     res.status(401).json({
@@ -46,4 +47,4 @@ app.use(function (err, req, res, next) {
   }
 });
 const port = process.env.PORT || 8000
-app.listen(port, () => {console.log(port)})
+app.listen(port, () => { console.log(port) })

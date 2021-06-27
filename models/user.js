@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
-const {v1 : uuuidv1} = require('uuid');
+const { v1: uuuidv1 } = require('uuid');
 const userSchema = mongoose.Schema({
     name: {
         type: String,
@@ -28,22 +28,22 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: Number,
-        default: 0
+        default: 1
     },
     history: {
         type: Array,
         default: []
     }
-},{timestamps: true});
+}, { timestamps: true });
 userSchema.virtual('password')
-.set(function (password)  {
-    // this._password = password;
-    this.salt = uuuidv1()
-    this.hashed_password = this.encrytPassword(password)
-}) 
-.get(function () {
-    return this._password
-})
+    .set(function (password) {
+        // this._password = password;
+        this.salt = uuuidv1()
+        this.hashed_password = this.encrytPassword(password)
+    })
+    .get(function () {
+        return this._password
+    })
 
 userSchema.methods = {
     authenticate: function (plainText) {

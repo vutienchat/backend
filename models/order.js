@@ -22,8 +22,11 @@ const orderSchema = mongoose.Schema({
     quantity: {
         type: Number,
     },
+    node: {
+        type: String,
+    },
     total: {
         type: Number,
     }
-},{timestamps:true})
-module.exports = mongoose.model("Order",orderSchema);
+}, { timestamps: true })
+module.exports = mongoose.model("Order", orderSchema);

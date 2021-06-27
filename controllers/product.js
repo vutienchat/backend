@@ -3,72 +3,110 @@ import formidable from 'formidable';
 import fs from 'fs';
 import _ from 'lodash';
 export const create = (req, res) => {
-     let form = new formidable.IncomingForm();
-     form.keepExtensions = true;
-     form.parse(req , (err,fields,files) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, files) => {
         if (err) {
-            return res.status(400).json( {
-                error :  "thêm sản phẩm thành công"
+            return res.status(400).json({
+                error: "thêm sản phẩm thất bại"
             })
         }
-        const {name,description,old_price} = fields;
-        if(!name || !description || !old_price) {
+        const { name, description, old_price } = fields;
+        if (!name || !description || !old_price) {
             return res.status(400).json({
-                error : "bạn phải nhập hết dữ liệu"
+                error: "bạn phải nhập hết dữ liệu"
             })
         }
         let product = new Product(fields);
-        if(files.photo){
+        if (files.photo) {
             // console.log(files.photo.size)
-           if(files.photo.size >500000){
-               return res.status(400).json({
-                   error : "bạn chỉ có thể up ảnh dưới 1 mb"
-               })
-           }
-           product.photo.data = fs.readFileSync(files.photo.path);
-           product.photo.contentType = files.photo.type;
+            if (files.photo.size > 900000) {
+                return res.status(400).json({
+                    error: "bạn chỉ có thể up ảnh dưới 1 mb"
+                })
+            }
+            product.photo.data = fs.readFileSync(files.photo.path);
+            product.photo.contentType = files.photo.type;
         }
         // console.log(product);
-            product.save((err,data) =>{
-                    if(err){
-                       return res.status(400).json({
-                            error: 'add product failed'
-                        })
-                    }
-                    res.json(data);
+        product.save((err, data) => {
+            if (err) {
+                return res.status(400).json({
+                    error: 'add product failed'
                 })
-     })
+            }
+            res.json(data);
+        })
+    })
 }
 export const listProduct = (req, res) => {
-    let price_gte = req.query.price_gte ? req.query.price_gte : 0;
-    let price_lte = req.query.price_lte ? req.query.price_lte : 9999999999999;
-    let _sort = req.query._sort;
-    let _order = req.query._order;
-    Product.find({$and: [{new_price: {$gte:price_gte} },{new_price: {$lte:price_lte}}]})
-    .select("-photo")
-    .sort([[_sort,_order]])
-    .populate('category')
-    .exec((err, data) => {
-        // Product.find().exec((err, data) => {
-        if(err){
+    const price_gte = req.query.price_gte ? { $gte: req.query.price_gte } : '';
+    const price_lte = req.query.price_lte ? { $lte: req.query.price_lte } : '';
+    const _sort = req.query._sort ? req.query._sort : '';
+    const _order = req.query._order ? req.query._order : '';
+    const _limit = req.query._limit ? parseInt(req.query._limit) : 0;
+    const _page = req.query._page ? parseInt(req.query._page) : 0;
+    const result = price_gte || price_lte ? { new_price: { ...price_gte, ...price_lte } } : {}
+    const myCustomLabels = {
+        totalDocs: 'itemCount',
+        docs: 'itemsList',
+        limit: '_limit',
+        page: 'currentPage',
+        nextPage: 'next',
+        prevPage: 'prev',
+        totalPages: 'pageCount',
+    };
+    const options = {
+        select: "-photo",
+        page: _page,
+        limit: _limit,
+        sort: _sort ? { [_sort]: _order } : {},
+        customLabels: myCustomLabels,
+    };
+    Product.paginate(result, options, (err, result) => {
+        if (err) {
             res.status(400).json({
-                error: 'add product failed'
+                error: 'k lay dc list product'
             })
         }
-        res.json(data);
+        res.json(result)
     })
-    
+    // const price_gte = req.query.price_gte ? { $gte: req.query.price_gte } : '';
+    // const price_lte = req.query.price_lte ? { $lte: req.query.price_lte } : '';
+    // const _sort = req.query._sort ? req.query._sort : '';
+    // const _order = req.query._order ? req.query._order : '';
+    // const _limit = req.query._limit ? parseInt(req.query._limit) : 0;
+    // const _page = req.query._page ? parseInt(req.query._page) : 0;
+    // const result = price_gte || price_lte ? { new_price: { ...price_gte, ...price_lte } } : {}
+    // Product.find(result)
+    //     .select("-photo")
+    //     .populate('category')
+    //     .sort(_sort ? { [_sort]: _order } : '')
+    //     .limit(_limit)
+    //     .skip((_page - 1) * _limit)
+    //     .exec((err, data) => {
+    //         Product.countDocuments({}, (err, count) => {
+    //             if (err) {
+    //                 res.status(400).json({
+    //                     error: 'k lay dc list product'
+    //                 })
+    //             }
+    //             res.json({ data, pagination: { _limit, _page: parseInt(req.query._page), _totalRows: count } });
+    //         })
+
+    //     })
+
 }
-export const productById = (req, res ,next , id) => {
-     Product.findById(id).populate('category').exec((err, product) => {
-       if(err || !product){
-          res.status(400).json({
-              error: 'không thấy thông tin sản phẩm'
-          })
+export const productById = (req, res, next, id) => {
+    Product.findById(id).populate('category').exec((err, product) => {
+        if (err || !product) {
+            res.status(400).json({
+                error: 'không thấy thông tin sản phẩm'
+            })
         }
         req.product = product;
         next();
-     })
+    })
 }
 export const read = (req, res) => {
     const data = req.product;
@@ -76,8 +114,8 @@ export const read = (req, res) => {
 }
 export const remove = (req, res) => {
     const product = req.product;
-    product.remove((err,data) => {
-        if(err){
+    product.remove((err, data) => {
+        if (err) {
             return res.status(400).json({
                 message: 'không xóa được sản phẩm',
                 // data
@@ -89,38 +127,38 @@ export const remove = (req, res) => {
 export const update = (req, res) => {
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;
-    form.parse(req , (err,fields,files) => {
-       if (err) {
-           return res.status(400).json( {
-               error :  "Sửa sản phẩm thành công"
-           })
-       }
-       const {name,description,old_price} = fields;
-       if(!name || !description || !old_price) {
-           return res.status(400).json({
-               error : "bạn phải nhập hết dữ liệu"
-           })
-       }
-    //    let product = new Product(fields);
-    let product = req.product;
-        product = _.assignIn(product,fields);
-       if(files.photo){
-          if(files.photo.size >500000){
-              return res.status(400).json({
-                  error : "bạn chỉ có thể up ảnh dưới 1 mb"
-              })
-          }
-          product.photo.data = fs.readFileSync(files.photo.path);
-          product.photo.contentType = files.photo.type;
-       }
-           product.save((err,data) =>{
-                   if(err){
-                       res.status(400).json({
-                           error: 'Không sửa được sản phẩm'
-                       })
-                   }
-                   res.json(data);
-               })
+    form.parse(req, (err, fields, files) => {
+        if (err) {
+            return res.status(400).json({
+                error: "Sửa sản phẩm thành công"
+            })
+        }
+        const { name, description, old_price } = fields;
+        if (!name || !description || !old_price) {
+            return res.status(400).json({
+                error: "bạn phải nhập hết dữ liệu"
+            })
+        }
+        //    let product = new Product(fields);
+        let product = req.product;
+        product = _.assignIn(product, fields);
+        if (files.photo) {
+            if (files.photo.size > 900000) {
+                return res.status(400).json({
+                    error: "bạn chỉ có thể up ảnh dưới 1 mb"
+                })
+            }
+            product.photo.data = fs.readFileSync(files.photo.path);
+            product.photo.contentType = files.photo.type;
+        }
+        product.save((err, data) => {
+            if (err) {
+                res.status(400).json({
+                    error: 'Không sửa được sản phẩm'
+                })
+            }
+            res.json(data);
+        })
     })
 }
 export const photo = (req, res, next) => {
@@ -131,14 +169,36 @@ export const photo = (req, res, next) => {
     next();
 }
 export const listCategories = (req, res) => {
-    Product.distinct("category", {}, (err, data) => {
-        if (err) {
-            res.status(400).json({
-                error: "Products not found"
-            })
-        }
-        res.json(data);
-    })
+    const categoryId = req.query.categoryId ? req.query.categoryId : '';
+    const price_gte = req.query.price_gte ? { $gte: req.query.price_gte } : '';
+    const price_lte = req.query.price_lte ? { $lte: req.query.price_lte } : '';
+    let _sort = req.query._sort;
+    let _order = req.query._order;
+    // Product.distinct("category", {}, (err, data) => {
+    const result = price_gte || price_lte ? { new_price: { ...price_gte, ...price_lte } } : {}
+    Product.find({ category: categoryId, ...result })
+        .select("-photo")
+        .sort([[_sort, _order]])
+        .exec((err, data) => {
+            if (err) {
+                res.status(400).json({
+                    error: "Products not found"
+                })
+            }
+            res.json(data);
+        })
+}
+export const countListCategories = (req, res) => {
+    const categoryId = req.query.categoryId ? req.query.categoryId : '';
+    Product.find({ category: categoryId }).count()
+        .exec((err, data) => {
+            if (err) {
+                res.status(400).json({
+                    error: "k tìm đc sản phẩm theo danh mục"
+                })
+            }
+            res.json(data);
+        })
 }
 export const listBySearch = () => {
     let order = req.query.order ? req.query.order : 'asc';
@@ -159,10 +219,10 @@ export const listBySearch = () => {
                 }
             } else {
                 findArgs[key] = req.body.filters[key];
-             }
             }
         }
     }
+}
 export const listRelated = (req, res) => {
     let limit = req.query.limit ? req.query.limit : 5;
     Product.find({
@@ -181,11 +241,14 @@ export const listRelated = (req, res) => {
             res.json(products)
         })
 }
-export const Classify = (req, res) =>{
-    Product.find({classify : req.query.classify}).select("-photo").exec((err,data) =>{
-        if(err){
-            return res.status(400).json( {
-                error: "không có classify 1"
+export const getByKey = (req, res) => {
+    // const category = req.query.category ? {category : req.query.category} :'';
+    // const classify = req.query.classify ? req.query.classify :'';
+    console.log(req.query);
+    Product.find(req.query).select("-photo").exec((err, data) => {
+        if (err) {
+            return res.status(400).json({
+                error: `không có classify 1`
             })
         }
         res.json(data)
