@@ -272,9 +272,17 @@ export const totalProductByCategory = (req, res) => {
   ]).exec((err, data) => {
     if (err) {
       return res.status(400).json({
-        error: `total By Category not found`,
+        error: "total Product By Category not found",
       });
     }
-    res.json(data);
+    let newData = [];
+    data.forEach((cat) => {
+      newData.push({
+        _id: cat._id,
+        count: cat.count,
+        name: cat.category[0].name,
+      });
+    });
+    res.json(newData);
   });
 };
