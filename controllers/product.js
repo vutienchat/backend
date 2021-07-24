@@ -247,7 +247,6 @@ export const listRelated = (req, res) => {
 export const getByKey = (req, res) => {
   // const category = req.query.category ? {category : req.query.category} :'';
   // const classify = req.query.classify ? req.query.classify :'';
-  console.log(req.query);
   Product.find(req.query)
     .select("-photo")
     .exec((err, data) => {
@@ -258,4 +257,24 @@ export const getByKey = (req, res) => {
       }
       res.json(data);
     });
+};
+export const totalProductByCategory = (req, res) => {
+  Product.aggregate([
+    { $group: { _id: "$category", count: { $sum: 1 } } },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "_id",
+        foreignField: "_id",
+        as: "category",
+      },
+    },
+  ]).exec((err, data) => {
+    if (err) {
+      return res.status(400).json({
+        error: `total By Category not found`,
+      });
+    }
+    res.json(data);
+  });
 };

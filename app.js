@@ -20,27 +20,13 @@ app.use(bodyParser.json());
 app.use(cors({ credentials: "same-origin" }));
 app.use(expressValidator());
 app.use(cookieParser());
-//connection
-// mongoose.connect(process.env.MONGODB_URI, {
-//   useNewUrlParser: true,
-//   useCreateIndex: true,
-//   useUnifiedTopology: true
-// }).then(() => {
-//   console.log('database connected')
-// });
-// mongoose.connection.on('Error', err => {
-//   console.log(`data connect failed , ${err.message}`)
-// })
 const connectDb = async () => {
   try {
-    await mongoose.connect(
-      "mongodb+srv://binshop:12345@binshop.wth0r.mongodb.net/binshop?retryWrites=true&w=majority",
-      {
-        useNewUrlParser: true,
-        useCreateIndex: true,
-        useUnifiedTopology: true,
-      }
-    );
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useCreateIndex: true,
+      useUnifiedTopology: true,
+    });
     console.log("database connected");
   } catch (error) {
     console.log(`data connect failed , ${error.message}`);

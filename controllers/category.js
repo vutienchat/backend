@@ -51,20 +51,7 @@ export const List = async (req, res) => {
           error: "Không tồn tại dah mục",
         });
       }
-      for (const item of data) {
-        await Product.countDocuments(
-          { category: item._id },
-          (err, dataCount) => {
-            if (err) {
-              return res.status(400).json({
-                error: "no count category",
-              });
-            }
-            newData.push({ ...item._doc, total: dataCount });
-          }
-        );
-      }
-      // const x = data.map(async (item) => {
+      // for (const item of data) {
       //   await Product.countDocuments(
       //     { category: item._id },
       //     (err, dataCount) => {
@@ -73,12 +60,11 @@ export const List = async (req, res) => {
       //           error: "no count category",
       //         });
       //       }
-      //       console.log({ ...item._doc, total: dataCount });
+      //       newData.push({ ...item._doc, total: dataCount });
       //     }
       //   );
-      // });
-
-      res.json(newData);
+      // }
+      res.json(data);
     });
 };
 export const categoryById = (req, res, next, id) => {
