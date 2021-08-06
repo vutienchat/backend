@@ -100,7 +100,6 @@ export const listProduct = (req, res) => {
 export const productById = (req, res, next, id) => {
   Product.findById(id)
     .populate("category", "name")
-    .select("-photo")
     .exec((err, product) => {
       if (err || !product) {
         res.status(400).json({
