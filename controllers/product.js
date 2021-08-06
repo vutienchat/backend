@@ -99,7 +99,8 @@ export const listProduct = (req, res) => {
 };
 export const productById = (req, res, next, id) => {
   Product.findById(id)
-    .populate("category")
+    .populate("category", "name")
+    .select("-photo")
     .exec((err, product) => {
       if (err || !product) {
         res.status(400).json({
@@ -275,13 +276,12 @@ export const totalProductByCategory = (req, res) => {
         error: "total Product By Category not found",
       });
     }
-    let newData = [];
-    data.forEach((cat) => {
-      newData.push({
-        _id: cat._id,
-        count: cat.count,
-        name: cat.category[0].name,
-      });
+    const newData = data.map((item) => {
+      return {
+        _id: item._id,
+        name: item.category[0].name,
+        count: item.count,
+      };
     });
     res.json(newData);
   });
